@@ -1,0 +1,139 @@
+sovio-automation/
+│
+├── pom.xml
+├── README.md
+│
+├── src
+│   ├── main
+│   │   └── java
+│   │       └── base
+│   │           └── BaseTest.java
+│   │
+│   └── test
+│       └── java
+│           └── tests
+│               ├── SignInTest.java
+│               └── NegativeSignInTest.java
+
+
+
+BaseTest.java
+package base;
+
+import io.github.bonigarcia.wdm.WebDriverManager;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+
+import java.time.Duration;
+
+public class BaseTest {
+
+    protected WebDriver driver;
+
+    @BeforeMethod
+    public void setUp() {
+        WebDriverManager.chromedriver().setup();
+        driver = new ChromeDriver();
+        driver.manage().window().maximize();
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+        driver.get("https://dev.sovio.id/sign-in");
+    }
+
+    @AfterMethod
+    public void tearDown() {
+        driver.quit();
+    }
+}
+
+
+SignInTest.java
+package tests;
+
+import base.BaseTest;
+import org.openqa.selenium.By;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+public class SignInTest extends BaseTest {
+
+    @Test
+    public void validLoginTest() {
+        driver.findElement(By.name("email"))
+                .sendKeys("validuser@email.com");
+
+        driver.findElement(By.name("password"))
+                .sendKeys("Valid@123");
+
+        driver.findElement(By.xpath("//button[contains(text(),'Sign In')]"))
+                .click();
+
+        // Assertion – URL or dashboard element
+        Assert.assertTrue(driver.getCurrentUrl().contains("dashboard"),
+                "User is not redirected to dashboard");
+    }
+}
+
+NegativeSignInTest.java
+package tests;
+
+import base.BaseTest;
+import org.openqa.selenium.By;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+public class NegativeSignInTest extends BaseTest {
+
+    @Test
+    public void loginWithEmptyFields() {
+        driver.findElement(By.xpath("//button[contains(text(),'Sign In')]"))
+                .click();
+
+        String error =
+                driver.findElement(By.xpath("//*[contains(text(),'required')]"))
+                        .getText();
+
+        Assert.assertTrue(error.contains("required"),
+                "Validation message not displayed");
+    }
+
+    @Test
+    public void loginWithInvalidPassword() {
+        driver.findElement(By.name("email"))
+                .sendKeys("validuser@email.com");
+
+        driver.findElement(By.name("password"))
+                .sendKeys("WrongPass");
+
+        driver.findElement(By.xpath("//button[contains(text(),'Sign In')]"))
+                .click();
+
+        String error =
+                driver.findElement(By.xpath("//*[contains(text(),'Invalid')]"))
+                        .getText();
+
+        Assert.assertTrue(error.contains("Invalid"),
+                "Invalid credentials error missing");
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
